@@ -16,38 +16,47 @@ using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
-
 namespace App1
 {
     /// <summary>
-    /// Provides application-specific behavior to supplement the default Application class.
+    /// VoiceScribeアプリケーションクラス
     /// </summary>
     public partial class App : Application
     {
         private Window? _window;
 
-        /// <summary>
-        /// Initializes the singleton application object.  This is the first line of authored code
-        /// executed, and as such is the logical equivalent of main() or WinMain().
-        /// </summary>
         public App()
         {
             InitializeComponent();
         }
 
-        /// <summary>
-        /// Invoked when the application is launched.
-        /// </summary>
-        /// <param name="args">Details about the launch request and process.</param>
         protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             _window = new MainWindow();
             _window.Activate();
 
-            // TODO: Add system tray support using H.NotifyIcon.WinUI
-            // This will allow the app to run minimized to system tray
+            // システムトレイアイコンを初期化（H.NotifyIcon.WinUI使用）
+            InitializeSystemTray();
+        }
+
+        private void InitializeSystemTray()
+        {
+            try
+            {
+                // TODO: H.NotifyIcon.WinUIを使用したシステムトレイ実装
+                // 以下のようなコードで実装予定:
+                // var notifyIcon = new NotifyIcon();
+                // notifyIcon.Text = "VoiceScribe";
+                // notifyIcon.Icon = new Icon("Assets/app-icon.ico");
+                // notifyIcon.ContextMenu = CreateContextMenu();
+                // notifyIcon.Visible = true;
+
+                System.Diagnostics.Debug.WriteLine("システムトレイの初期化");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"システムトレイ初期化エラー: {ex.Message}");
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -12,6 +13,8 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Graphics;
+using WinRT.Interop;
 using App1.ViewModels;
 using App1.Services;
 
@@ -28,6 +31,8 @@ namespace App1
         public MainWindow()
         {
             InitializeComponent();
+
+            SetWindowSize(600, 700);
 
             // Initialize services and ViewModel
             var audioCaptureService = new AudioCaptureService();
@@ -51,6 +56,14 @@ namespace App1
 
             // Set up hotkey handler
             this.Closed += (s, e) => hotKeyService.Unregister();
+        }
+
+        private void SetWindowSize(int width, int height)
+        {
+            var hwnd = WindowNative.GetWindowHandle(this);
+            var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+            var appWindow = AppWindow.GetFromWindowId(windowId);
+            appWindow.Resize(new SizeInt32(width, height));
         }
 
         private void OnClearClicked(object sender, RoutedEventArgs e)

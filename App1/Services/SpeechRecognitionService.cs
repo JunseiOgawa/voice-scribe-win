@@ -1,6 +1,7 @@
 using System;
-using System.Diagnostics;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -28,34 +29,39 @@ namespace App1.Services
         public string CurrentModel { get; set; } = "fast";
 
         private bool _isInitialized;
+        private string _modelPath = "";
 
         public async Task InitializeAsync()
         {
             try
             {
                 // Check if models exist
-                var modelPath = Path.Combine(AppContext.BaseDirectory, ModelDirectory);
-                if (!Directory.Exists(modelPath))
+                _modelPath = Path.Combine(AppContext.BaseDirectory, ModelDirectory);
+                if (!Directory.Exists(_modelPath))
                 {
-                    Directory.CreateDirectory(modelPath);
-                    ErrorOccurred?.Invoke(this, $"Model directory created at {modelPath}. Please download ReazonSpeech models.");
+                    Directory.CreateDirectory(_modelPath);
+                    ErrorOccurred?.Invoke(this, $"モデルディレクトリを作成しました: {_modelPath}\nReazonSpeechモデルをダウンロードしてください。");
+                    await Task.CompletedTask;
                     return;
                 }
 
-                var fastModelPath = Path.Combine(modelPath, FastModelName);
-                if (!File.Exists(fastModelPath))
+                var modelFiles = Directory.GetFiles(_modelPath, "*.onnx");
+                if (modelFiles.Length == 0)
                 {
                     ErrorOccurred?.Invoke(this, 
-                        $"Fast model not found at {fastModelPath}. Please download ReazonSpeech-NeMo v2.");
+                        $"モデルが見つかりません: {_modelPath}\nReazonSpeech-NeMo v2をダウンロードしてください。");
+                    await Task.CompletedTask;
                     return;
                 }
 
                 _isInitialized = true;
+                System.Diagnostics.Debug.WriteLine($"初期化完了。見つかったモデル: {string.Join(", ", modelFiles.Select(Path.GetFileName))}");
                 await Task.CompletedTask;
             }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, $"Initialization failed: {ex.Message}");
+                ErrorOccurred?.Invoke(this, $"初期化失敗: {ex.Message}");
+                await Task.CompletedTask;
             }
         }
 
@@ -63,55 +69,75 @@ namespace App1.Services
         {
             try
             {
-                if (!_isInitialized)
+                if (audioData == null || audioData.Length == 0)
                 {
-                    ErrorOccurred?.Invoke(this, "Service not initialized. Please call InitializeAsync first.");
+                    ErrorOccurred?.Invoke(this, "オーディオデータが空です");
                     return;
                 }
 
-                // For now, we'll use a placeholder implementation
-                // In production, this would use ONNX Runtime to run the ReazonSpeech model
-                
-                // This is a mock implementation that returns empty string
-                // Real implementation would:
-                // 1. Preprocess audio data (convert bytes to float array, apply normalization)
-                // 2. Load ONNX model using Microsoft.ML.OnnxRuntime
-                // 3. Run inference
-                // 4. Post-process output to get text
+                // TODO: ONNX Runtimeを使用した実際の音声認識実装
+                // 以下は基本的な処理フロー:
+                // 1. オーディオデータを前処理
+                // 2. ONNXモデルをロード
+                // 3. 推論を実行
+                // 4. 結果を後処理
 
-                var mockResult = await MockRecognitionAsync(audioData);
-                RecognitionResult?.Invoke(this, mockResult);
+                var result = await PerformRecognitionAsync(audioData);
+                RecognitionResult?.Invoke(this, result);
 
                 await Task.CompletedTask;
             }
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, $"Recognition failed: {ex.Message}");
+                ErrorOccurred?.Invoke(this, $"認識失敗: {ex.Message}");
             }
         }
 
-        private async Task<string> MockRecognitionAsync(byte[] audioData)
+        private async Task<string> PerformRecognitionAsync(byte[] audioData)
         {
-            // This is a placeholder. In a real implementation, this would:
-            // 1. Convert audio bytes to appropriate format
-            // 2. Load and run the ONNX model
-            // 3. Return the recognized text
+            // シミュレーション: 音声データの長さに基づいて処理時間を計算
+            float durationSeconds = audioData.Length / (16000f * 2); // 16kHz, 16-bit
+            int processingTime = Math.Max(500, (int)(durationSeconds * 1000 * 0.3)); // 処理時間をシミュレート
 
-            await Task.Delay(500); // Simulate processing time
-            return ""; // Empty result for now
+            await Task.Delay(processingTime);
+
+            // 実装予定: 日本語音声認識結果を返す
+            // 現在はモデルが未実装のため空文字列を返す
+            return "";
         }
 
-        // Helper method to preprocess audio
         private float[] PreprocessAudio(byte[] audioData, int sampleRate = 16000)
         {
-            // Convert byte array to float array
+            // バイト配列をフロート配列に変換
             var floatData = new float[audioData.Length / 2];
             for (int i = 0; i < floatData.Length; i++)
             {
                 short sample = BitConverter.ToInt16(audioData, i * 2);
-                floatData[i] = sample / 32768f; // Normalize to [-1, 1]
+                floatData[i] = sample / 32768f; // [-1, 1]に正規化
             }
             return floatData;
+        }
+
+        private List<int> PostProcessOutput(float[] modelOutput)
+        {
+            // モデル出力をトークンIDのリストに変換
+            var tokenIds = new List<int>();
+            
+            // argmax を取得
+            float maxValue = modelOutput[0];
+            int maxIdx = 0;
+            
+            for (int i = 1; i < modelOutput.Length; i++)
+            {
+                if (modelOutput[i] > maxValue)
+                {
+                    maxValue = modelOutput[i];
+                    maxIdx = i;
+                }
+            }
+            
+            tokenIds.Add(maxIdx);
+            return tokenIds;
         }
     }
 }
