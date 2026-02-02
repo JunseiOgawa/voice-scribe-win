@@ -61,7 +61,7 @@ namespace App1
         private void SetWindowSize(int width, int height)
         {
             var hwnd = WindowNative.GetWindowHandle(this);
-            var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+            var windowId = Microsoft.UI.Win32Interop.GetWindowIdFromWindow(hwnd);
             var appWindow = AppWindow.GetFromWindowId(windowId);
             appWindow.Resize(new SizeInt32(width, height));
         }

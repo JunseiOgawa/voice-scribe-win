@@ -28,7 +28,6 @@ namespace App1.Services
 
         public string CurrentModel { get; set; } = "fast";
 
-        private bool _isInitialized;
         private string _modelPath = "";
 
         public async Task InitializeAsync()
@@ -54,7 +53,6 @@ namespace App1.Services
                     return;
                 }
 
-                _isInitialized = true;
                 System.Diagnostics.Debug.WriteLine($"初期化完了。見つかったモデル: {string.Join(", ", modelFiles.Select(Path.GetFileName))}");
                 await Task.CompletedTask;
             }
